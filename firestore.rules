@@ -1,0 +1,29 @@
+rules_version='2'
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Top-level users collection
+    match /users/{userId} {
+      // Users can only read and write their own profile document
+      allow read, write: if isOwner(userId);
+
+      // Daily Logs subcollection
+      match /dailyLogs/{logDateId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // Meals subcollection
+      match /meals/{mealId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+  }
+}
