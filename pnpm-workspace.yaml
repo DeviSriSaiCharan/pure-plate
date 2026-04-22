@@ -1,1 +1,5 @@
+allowBuilds:
+  '@firebase/util': false
+  protobufjs: false
+  react-native-vision-camera: false
 nodeLinker: hoisted
