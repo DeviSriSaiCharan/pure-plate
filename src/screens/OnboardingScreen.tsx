@@ -30,7 +30,7 @@ export default function OnboardingScreen({ navigation }: any) {
         <TouchableOpacity 
           style={styles.buttonWrapper} 
           activeOpacity={0.8}
-          onPress={() => navigation.replace('MainTabs')}
+          onPress={() => navigation.replace('Auth')}
         >
           <LinearGradient
             colors={[colors.primaryGradientStart, colors.primaryGradientEnd]}
