@@ -3,13 +3,12 @@ import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../theme/colors';
 import { Bell, Footprints, Droplets, Utensils } from 'lucide-react-native';
-import { collection, query, where, onSnapshot, doc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db, auth } from '../lib/firebaseSetup';
 
 export default function DashboardScreen() {
   const [meals, setMeals] = useState<any[]>([]);
   const [totalCalories, setTotalCalories] = useState(0);
-  const [userName, setUserName] = useState('Alex');
   
   const DAILY_GOAL = 2000;
   
@@ -48,20 +47,6 @@ export default function DashboardScreen() {
     return () => unsubscribe();
   }, []);
 
-  useEffect(() => {
-    const userId = auth.currentUser?.uid;
-    if (!userId) return;
-
-    const unsubscribe = onSnapshot(doc(db, 'users', userId), (snapshot) => {
-      const data = snapshot.data();
-      if (data?.name) {
-        setUserName(data.name);
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
-
   const progressPercent = Math.min(100, Math.round((totalCalories / DAILY_GOAL) * 100));
 
   return (
@@ -73,7 +58,7 @@ export default function DashboardScreen() {
           <View style={styles.profileSection}>
             <View style={styles.avatarPlaceholder} />
             <View>
-              <Text style={styles.greetingTitle}>Hello {userName} 👋</Text>
+              <Text style={styles.greetingTitle}>Hello Alex 👋</Text>
               <Text style={styles.greetingSub}>Get ready</Text>
             </View>
           </View>
