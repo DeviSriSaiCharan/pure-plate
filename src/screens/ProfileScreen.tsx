@@ -48,6 +48,41 @@ export default function ProfileScreen() {
     }
   };
 
+  useEffect(() => {
+    const userId = auth.currentUser?.uid;
+    if (!userId) return;
+
+    const q = query(collection(db, 'meals'), where('userId', '==', userId));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const mealsData: any[] = [];
+      let totalCals = 0;
+      let totalProtein = 0, totalCarbs = 0, totalFat = 0;
+
+      const today = new Date().toISOString().split('T')[0];
+
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        mealsData.push({ id: doc.id, ...data });
+
+        if (data.timestamp?.startsWith(today)) {
+          totalCals += data.calories || 0;
+          totalProtein += data.macros?.protein || 0;
+          totalCarbs += data.macros?.carbs || 0;
+          totalFat += data.macros?.fat || 0;
+        }
+      });
+
+      setStats({
+        totalMealsLogged: mealsData.length,
+        totalCaloriesToday: totalCals,
+        weeklyAverage: Math.round(totalCals / 7),
+        macros: { protein: totalProtein, carbs: totalCarbs, fat: totalFat },
+      });
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   if (isLoading) {
     return (
       <View style={styles.loaderContainer}>
@@ -134,40 +169,7 @@ export default function ProfileScreen() {
   );
 }
 
-  useEffect(() => {
-    const userId = auth.currentUser?.uid;
-    if (!userId) return;
 
-    const q = query(collection(db, 'meals'), where('userId', '==', userId));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const mealsData: any[] = [];
-      let totalCals = 0;
-      let totalProtein = 0, totalCarbs = 0, totalFat = 0;
-
-      const today = new Date().toISOString().split('T')[0];
-
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        mealsData.push({ id: doc.id, ...data });
-
-        if (data.timestamp?.startsWith(today)) {
-          totalCals += data.calories || 0;
-          totalProtein += data.macros?.protein || 0;
-          totalCarbs += data.macros?.carbs || 0;
-          totalFat += data.macros?.fat || 0;
-        }
-      });
-
-      setStats({
-        totalMealsLogged: mealsData.length,
-        totalCaloriesToday: totalCals,
-        weeklyAverage: Math.round(totalCals / 7),
-        macros: { protein: totalProtein, carbs: totalCarbs, fat: totalFat },
-      });
-    });
-
-    return () => unsubscribe();
-  }, []);
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -234,97 +236,97 @@ const styles = StyleSheet.create({
     fontFamily: 'Outfit_700Bold',
     color: colors.textPrimary,
     fontSize: 15,
-    divider: {
-      height: 1,
-      backgroundColor: '#e5e7eb',
-      marginVertical: 16,
-    },
-    statsHeader: {
-      fontFamily: 'Outfit_600SemiBold',
-      fontSize: 16,
-      color: colors.textPrimary,
-      marginBottom: 12,
-    },
-    statsGrid: {
-      flexDirection: 'row',
-      gap: 10,
-      marginBottom: 16,
-    },
-    statBox: {
-      flex: 1,
-      backgroundColor: '#f9fafb',
-      borderRadius: 14,
-      padding: 12,
-      alignItems: 'center',
-      borderLeftWidth: 4,
-      borderLeftColor: colors.primary,
-    },
-    statValue: {
-      fontFamily: 'Outfit_700Bold',
-      fontSize: 20,
-      color: colors.primary,
-    },
-    statLabel: {
-      fontFamily: 'Outfit_400Regular',
-      fontSize: 12,
-      color: colors.textSecondary,
-      marginTop: 4,
-    },
-    macrosContainer: {
-      marginTop: 12,
-      padding: 12,
-      backgroundColor: '#f9fafb',
-      borderRadius: 14,
-    },
-    macrosTitle: {
-      fontFamily: 'Outfit_600SemiBold',
-      color: colors.textPrimary,
-      marginBottom: 10,
-    },
-    macroBar: {
-      flexDirection: 'row',
-      height: 24,
-      borderRadius: 12,
-      overflow: 'hidden',
-      marginBottom: 10,
-    },
-    macroSegment: {
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    proteinSegment: {
-      backgroundColor: '#ef4444',
-    },
-    carbsSegment: {
-      backgroundColor: colors.primary,
-    },
-    fatSegment: {
-      backgroundColor: '#8b5cf6',
-    },
-    macroText: {
-      fontFamily: 'Outfit_600SemiBold',
-      fontSize: 10,
-      color: '#fff',
-    },
-    macroLegend: {
-      flexDirection: 'row',
-      gap: 12,
-    },
-    legendItem: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 6,
-    },
-    legendColor: {
-      width: 10,
-      height: 10,
-      borderRadius: 2,
-    },
-    legendText: {
-      fontFamily: 'Outfit_400Regular',
-      fontSize: 12,
-      color: colors.textSecondary,
-    },
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#e5e7eb',
+    marginVertical: 16,
+  },
+  statsHeader: {
+    fontFamily: 'Outfit_600SemiBold',
+    fontSize: 16,
+    color: colors.textPrimary,
+    marginBottom: 12,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 16,
+  },
+  statBox: {
+    flex: 1,
+    backgroundColor: '#f9fafb',
+    borderRadius: 14,
+    padding: 12,
+    alignItems: 'center',
+    borderLeftWidth: 4,
+    borderLeftColor: colors.primary,
+  },
+  statValue: {
+    fontFamily: 'Outfit_700Bold',
+    fontSize: 20,
+    color: colors.primary,
+  },
+  statLabel: {
+    fontFamily: 'Outfit_400Regular',
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 4,
+  },
+  macrosContainer: {
+    marginTop: 12,
+    padding: 12,
+    backgroundColor: '#f9fafb',
+    borderRadius: 14,
+  },
+  macrosTitle: {
+    fontFamily: 'Outfit_600SemiBold',
+    color: colors.textPrimary,
+    marginBottom: 10,
+  },
+  macroBar: {
+    flexDirection: 'row',
+    height: 24,
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginBottom: 10,
+  },
+  macroSegment: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  proteinSegment: {
+    backgroundColor: '#ef4444',
+  },
+  carbsSegment: {
+    backgroundColor: colors.primary,
+  },
+  fatSegment: {
+    backgroundColor: '#8b5cf6',
+  },
+  macroText: {
+    fontFamily: 'Outfit_600SemiBold',
+    fontSize: 10,
+    color: '#fff',
+  },
+  macroLegend: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  legendColor: {
+    width: 10,
+    height: 10,
+    borderRadius: 2,
+  },
+  legendText: {
+    fontFamily: 'Outfit_400Regular',
+    fontSize: 12,
+    color: colors.textSecondary,
   },
   logoutBtn: {
     marginTop: 20,
