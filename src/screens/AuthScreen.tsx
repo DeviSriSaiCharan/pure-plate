@@ -17,11 +17,16 @@ type GoogleSignInSectionProps = {
 };
 
 function GoogleSignInSection({ busy, setBusy }: GoogleSignInSectionProps) {
+  // expo-auth-session v7 deprecated useProxy. Hardcode the Expo Auth Proxy URL.
+  // Add this URL to Google Cloud Console → Authorized Redirect URIs
+  const redirectUri = 'https://auth.expo.io/@pavankotti/bito-calorie-tracker';
+
   const [request, response, promptAsync] = Google.useAuthRequest({
     clientId: process.env.EXPO_PUBLIC_GOOGLE_EXPO_CLIENT_ID,
     iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
     androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
     webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+    redirectUri,
   });
 
   useEffect(() => {

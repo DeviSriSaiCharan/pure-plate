@@ -1,24 +1,24 @@
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Home, BarChart2, Flame, User, ScanLine } from 'lucide-react-native';
+import { Home, BarChart2, CloudSun, Flame, User, ScanLine } from 'lucide-react-native';
 import DashboardScreen from '../screens/DashboardScreen';
 import AnalyticsScreen from '../screens/AnalyticsScreen';
+import WeatherScreen from '../screens/WeatherScreen';
 import ActivityScreen from '../screens/ActivityScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import { colors } from '../theme/colors';
-import { LinearGradient } from 'expo-linear-gradient';
 
 const Tab = createBottomTabNavigator();
 
-// Custom Middle Button Component
-const CustomTabBarButton = ({ children, onPress }: any) => (
+// Floating center camera button
+const CameraTabButton = ({ children, onPress }: any) => (
   <TouchableOpacity
-    style={styles.customButtonContainer}
+    style={styles.cameraButtonOuter}
     onPress={onPress}
-    activeOpacity={0.8}
+    activeOpacity={0.85}
   >
-    <View style={styles.customButtonWrapper}>
+    <View style={styles.cameraButtonInner}>
       {children}
     </View>
   </TouchableOpacity>
@@ -35,29 +35,28 @@ export default function TabNavigator() {
         tabBarInactiveTintColor: colors.tabBarInactive,
       }}
     >
-      <Tab.Screen 
-        name="Dashboard" 
-        component={DashboardScreen} 
+      <Tab.Screen
+        name="Dashboard"
+        component={DashboardScreen}
         options={{
-          tabBarIcon: ({ color }) => (
-            <Home size={24} color={color} fill={color === colors.tabBarActive ? colors.primaryGradientStart : 'none'} />
+          tabBarIcon: ({ color, focused }) => (
+            <Home size={24} color={color} fill={focused ? color : 'none'} />
           ),
         }}
       />
-      <Tab.Screen 
-        name="Analytics" 
-        component={AnalyticsScreen} 
+
+      <Tab.Screen
+        name="Analytics"
+        component={AnalyticsScreen}
         options={{
-          tabBarIcon: ({ color }) => (
-            <BarChart2 size={24} color={color} />
-          ),
+          tabBarIcon: ({ color }) => <BarChart2 size={24} color={color} />,
         }}
       />
-      
-      {/* Central Action Button */}
-      <Tab.Screen 
-        name="Camera" 
-        component={View} // Dummy
+
+      {/* Centre: Camera — opens as modal via listener */}
+      <Tab.Screen
+        name="Camera"
+        component={View}
         listeners={({ navigation }) => ({
           tabPress: (e) => {
             e.preventDefault();
@@ -65,32 +64,29 @@ export default function TabNavigator() {
           },
         })}
         options={{
-          tabBarIcon: ({ color }) => (
-            <View style={styles.scanIconContainer}>
-              <ScanLine size={28} color="#FFF" />
+          tabBarIcon: () => (
+            <View style={styles.scanIcon}>
+              <ScanLine size={26} color="#FFF" />
             </View>
           ),
-          tabBarButton: (props) => (
-            <CustomTabBarButton {...props} />
-          ),
+          tabBarButton: (props) => <CameraTabButton {...props} />,
         }}
       />
-      
-      <Tab.Screen 
-        name="Activity" 
-        component={ActivityScreen} 
+
+      <Tab.Screen
+        name="Weather"
+        component={WeatherScreen}
         options={{
-          tabBarIcon: ({ color }) => (
-            <Flame size={24} color={color} />
-          ),
+          tabBarIcon: ({ color }) => <CloudSun size={24} color={color} />,
         }}
       />
-      <Tab.Screen 
-        name="Profile" 
-        component={ProfileScreen} 
+
+      <Tab.Screen
+        name="Profile"
+        component={ProfileScreen}
         options={{
-          tabBarIcon: ({ color }) => (
-            <User size={24} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <User size={24} color={color} fill={focused ? color : 'none'} />
           ),
         }}
       />
@@ -101,41 +97,41 @@ export default function TabNavigator() {
 const styles = StyleSheet.create({
   tabBar: {
     position: 'absolute',
-    bottom: 24,
-    left: 24,
-    right: 24,
+    bottom: 20,
+    left: 20,
+    right: 20,
     elevation: 0,
     backgroundColor: colors.surface,
-    borderRadius: 30,
-    height: 70,
+    borderRadius: 32,
+    height: 68,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.05,
-    shadowRadius: 20,
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
     borderTopWidth: 0,
   },
-  customButtonContainer: {
-    top: -20,
+  cameraButtonOuter: {
+    top: -22,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  customButtonWrapper: {
+  cameraButtonInner: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#000',
+    backgroundColor: '#111827',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 5,
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 8,
   },
-  scanIconContainer: {
+  scanIcon: {
     width: '100%',
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-  }
+  },
 });
