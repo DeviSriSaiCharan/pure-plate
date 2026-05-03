@@ -1,11 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, StyleSheet } from 'react-native';
 import { colors } from '../theme/colors';
-import { auth, db } from '../lib/firebaseSetup';
-import { doc, onSnapshot, collection, query, where } from 'firebase/firestore';
-import { logoutUser } from '../api/auth';
-import { UserProfile } from '../types/schema';
 
 export default function ProfileScreen() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -92,80 +86,9 @@ export default function ProfileScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.header}>Profile</Text>
-
-      <View style={styles.card}>
-        <Text style={styles.name}>{profile?.name || 'User'}</Text>
-        <Text style={styles.email}>{profile?.email || auth.currentUser?.email || 'No email'}</Text>
-
-        <View style={styles.row}>
-          <View style={styles.infoBox}>
-            <Text style={styles.infoLabel}>Goal</Text>
-            <Text style={styles.infoValue}>{profile?.goal || 'MAINTAIN'}</Text>
-          </View>
-          <View style={styles.infoBox}>
-            <Text style={styles.infoLabel}>Activity</Text>
-            <Text style={styles.infoValue}>{profile?.activityLevel || 'ACTIVE'}</Text>
-          </View>
-        </View>
-
-        <View style={styles.infoBoxFull}>
-          <Text style={styles.infoLabel}>Daily Calorie Target</Text>
-          <Text style={styles.infoValue}>{profile?.dailyCalorieTarget || 2000} kcal</Text>
-        </View>
-
-        <View style={styles.divider} />
-
-        <Text style={styles.statsHeader}>📊 Your Stats</Text>
-        <View style={styles.statsGrid}>
-          <View style={styles.statBox}>
-            <Text style={styles.statValue}>{stats.totalMealsLogged}</Text>
-            <Text style={styles.statLabel}>Meals Logged</Text>
-          </View>
-          <View style={styles.statBox}>
-            <Text style={styles.statValue}>{stats.totalCaloriesToday}</Text>
-            <Text style={styles.statLabel}>Today (kcal)</Text>
-          </View>
-          <View style={styles.statBox}>
-            <Text style={styles.statValue}>{stats.weeklyAverage}</Text>
-            <Text style={styles.statLabel}>Weekly Avg</Text>
-          </View>
-        </View>
-
-        <View style={styles.macrosContainer}>
-          <Text style={styles.macrosTitle}>🥗 Macros Today</Text>
-          <View style={styles.macroBar}>
-            <View style={[styles.macroSegment, styles.proteinSegment, { flex: Math.max(1, stats.macros.protein) }]}>
-              <Text style={styles.macroText}>{Math.round(stats.macros.protein)}g</Text>
-            </View>
-            <View style={[styles.macroSegment, styles.carbsSegment, { flex: Math.max(1, stats.macros.carbs) }]}>
-              <Text style={styles.macroText}>{Math.round(stats.macros.carbs)}g</Text>
-            </View>
-            <View style={[styles.macroSegment, styles.fatSegment, { flex: Math.max(1, stats.macros.fat) }]}>
-              <Text style={styles.macroText}>{Math.round(stats.macros.fat)}g</Text>
-            </View>
-          </View>
-          <View style={styles.macroLegend}>
-            <View style={styles.legendItem}>
-              <View style={[styles.legendColor, styles.proteinSegment]} />
-              <Text style={styles.legendText}>Protein</Text>
-            </View>
-            <View style={styles.legendItem}>
-              <View style={[styles.legendColor, styles.carbsSegment]} />
-              <Text style={styles.legendText}>Carbs</Text>
-            </View>
-            <View style={styles.legendItem}>
-              <View style={[styles.legendColor, styles.fatSegment]} />
-              <Text style={styles.legendText}>Fat</Text>
-            </View>
-          </View>
-        </View>
-        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-          <Text style={styles.logoutText}>Sign Out</Text>
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
+    <View style={styles.container}>
+      <Text style={styles.text}>Profile</Text>
+    </View>
   );
 }
 

@@ -103,12 +103,7 @@ export default function CameraScreen({ navigation }: any) {
   };
 
   const logMealToFirestore = async () => {
-    const userId = auth.currentUser?.uid;
-
-    if (!userId) {
-      Alert.alert("Authentication Required", "Please sign in to log meals.");
-      return;
-    }
+    const userId = auth.currentUser?.uid || "demo-capstone-user";
     
     if (result.isRawIngredient) {
       Alert.alert("Warning", "You cannot log raw ingredients as a meal. Please prepare it first!");
@@ -118,7 +113,7 @@ export default function CameraScreen({ navigation }: any) {
     try {
       setIsProcessing(true);
       await addDoc(collection(db, 'meals'), {
-        userId,
+        userId: userId,
         foodName: result.foodName,
         calories: Number(result.calories),
         macros: {

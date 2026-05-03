@@ -90,7 +90,7 @@ export default function ActivityScreen() {
           <Text style={styles.sectionTitle}>Recent Meals</Text>
           {meals.map((meal, index) => (
             <View key={meal.id || index} style={styles.mealCard}>
-              <View style={styles.mealHeader}>
+              <View style={styles.mealHeaderRow}>
                 <View>
                   <Text style={styles.mealName}>{meal.foodName}</Text>
                   <Text style={styles.mealTime}>
@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  mealHeader: {
+  mealHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

@@ -31,7 +31,7 @@ export default function TabNavigator() {
         headerShown: false,
         tabBarShowLabel: false,
         tabBarStyle: styles.tabBar,
-        tabBarActiveTintColor: colors.primary,
+        tabBarActiveTintColor: colors.tabBarActive,
         tabBarInactiveTintColor: colors.tabBarInactive,
       }}
     >
@@ -40,7 +40,7 @@ export default function TabNavigator() {
         component={DashboardScreen} 
         options={{
           tabBarIcon: ({ color }) => (
-            <Home size={24} color={color} fill={color === colors.primary ? color : 'none'} />
+            <Home size={24} color={color} fill={color === colors.tabBarActive ? colors.primaryGradientStart : 'none'} />
           ),
         }}
       />
@@ -49,7 +49,7 @@ export default function TabNavigator() {
         component={AnalyticsScreen} 
         options={{
           tabBarIcon: ({ color }) => (
-            <BarChart2 size={24} color={color} fill={color === colors.primary ? color : 'none'} />
+            <BarChart2 size={24} color={color} />
           ),
         }}
       />
@@ -81,7 +81,7 @@ export default function TabNavigator() {
         component={ActivityScreen} 
         options={{
           tabBarIcon: ({ color }) => (
-            <Flame size={24} color={color} fill={color === colors.primary ? color : 'none'} />
+            <Flame size={24} color={color} />
           ),
         }}
       />
@@ -90,7 +90,7 @@ export default function TabNavigator() {
         component={ProfileScreen} 
         options={{
           tabBarIcon: ({ color }) => (
-            <User size={24} color={color} fill={color === colors.primary ? color : 'none'} />
+            <User size={24} color={color} />
           ),
         }}
       />
