@@ -2,6 +2,7 @@
   "expo": {
     "name": "temp-app",
     "slug": "temp-app",
+    "scheme": "tempapp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -36,7 +37,14 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "react-native-fast-tflite"
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Bito to access your camera to scan meals."
+        }
+      ],
+      "expo-font",
+      "expo-web-browser"
     ],
     "extra": {
       "eas": {

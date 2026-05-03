@@ -1,6 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { initializeAuth, getReactNativePersistence } from 'firebase/auth/react-native';
-import { initializeFirestore, persistentLocalCache } from 'firebase/firestore';
+import { initializeAuth, getReactNativePersistence } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // -------------------------------------------------------------
@@ -26,9 +25,11 @@ export const auth = initializeAuth(app, {
   persistence: getReactNativePersistence(AsyncStorage)
 });
 
-// 3. Initialize Firestore (With Offline Local Cache Enabled)
-// If the user logs a meal deep in a basement with no coverage, 
-// this cache will queue it and sync it automatically when they reach service!
-export const db = initializeFirestore(app, {
-  localCache: persistentLocalCache()
-});
+import { getFirestore } from 'firebase/firestore';
+
+// 3. Initialize Firestore 
+export const db = getFirestore(app);
+
+// 4. Initialize Cloud Functions
+import { getFunctions } from 'firebase/functions';
+export const functions = getFunctions(app);

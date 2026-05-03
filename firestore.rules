@@ -2,28 +2,13 @@ rules_version='2'
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper functions
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-    function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
-    }
-
-    // Top-level users collection
     match /users/{userId} {
-      // Users can only read and write their own profile document
-      allow read, write: if isOwner(userId);
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
 
-      // Daily Logs subcollection
-      match /dailyLogs/{logDateId} {
-        allow read, write: if isOwner(userId);
-      }
-
-      // Meals subcollection
-      match /meals/{mealId} {
-        allow read, write: if isOwner(userId);
-      }
+    match /meals/{mealId} {
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
     }
   }
 }
