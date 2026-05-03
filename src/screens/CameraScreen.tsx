@@ -3,7 +3,7 @@ import {
   View, Text, StyleSheet, TouchableOpacity, ActivityIndicator,
   Alert, TextInput, ScrollView, Modal, Animated
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { colors } from '../theme/colors';
 import { X, Camera as CameraIcon, Barcode, ScanLine, Scale, ChevronDown } from 'lucide-react-native';
@@ -50,6 +50,7 @@ function scaleNutrition(result: any, grams: number): any {
 
 export default function CameraScreen({ navigation }: any) {
   const [permission, requestPermission] = useCameraPermissions();
+  const insets = useSafeAreaInsets();
   const cameraRef = useRef<CameraView>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [result, setResult] = useState<any>(null);
@@ -64,11 +65,18 @@ export default function CameraScreen({ navigation }: any) {
 
   if (!permission.granted) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.text}>Camera permission is needed to scan food</Text>
-        <TouchableOpacity style={styles.permissionButton} onPress={requestPermission}>
-          <Text style={styles.permissionText}>Grant Permission</Text>
-        </TouchableOpacity>
+      <View style={styles.permissionCenter}>
+        <View style={[styles.permissionTopBar, { paddingTop: Math.max(insets.top, 20) }]}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.permissionBackBtn}>
+            <X size={22} color="#000" />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.permissionContent}>
+          <Text style={styles.text}>Camera permission is needed to scan food</Text>
+          <TouchableOpacity style={styles.permissionButton} onPress={requestPermission}>
+            <Text style={styles.permissionText}>Grant Permission</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
@@ -344,9 +352,9 @@ export default function CameraScreen({ navigation }: any) {
         onBarcodeScanned={isBarcodeMode ? handleBarcodeScanned : undefined}
       />
 
-      <SafeAreaView style={styles.overlay}>
+      <View style={styles.overlay}>
         {/* Top Controls */}
-        <View style={styles.topBar}>
+        <View style={[styles.topBar, { paddingTop: Math.max(insets.top, 20) }]}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconBtn}>
             <X size={22} color="#FFF" />
           </TouchableOpacity>
@@ -375,7 +383,7 @@ export default function CameraScreen({ navigation }: any) {
         </View>
 
         {/* Bottom Controls */}
-        <View style={styles.bottomBar}>
+        <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 44) }]}>
           {!isBarcodeMode ? (
             <TouchableOpacity
               style={[styles.captureBtn, isProcessing && styles.captureBtnBusy]}
@@ -398,7 +406,7 @@ export default function CameraScreen({ navigation }: any) {
             <Text style={styles.processingText}>Asking Gemini AI...</Text>
           )}
         </View>
-      </SafeAreaView>
+      </View>
     </View>
   );
 }
@@ -407,6 +415,10 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
   camera: { ...StyleSheet.absoluteFillObject },
   center: { flex: 1, backgroundColor: colors.background },
+  permissionCenter: { flex: 1, backgroundColor: colors.background },
+  permissionTopBar: { paddingHorizontal: 20, alignItems: 'flex-start' },
+  permissionContent: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20, marginTop: -40 },
+  permissionBackBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#f3f4f6', justifyContent: 'center', alignItems: 'center' },
   text: { fontSize: 16, fontFamily: 'Outfit_400Regular', color: colors.textPrimary, marginBottom: 20, textAlign: 'center' },
   permissionButton: { backgroundColor: colors.primary, paddingHorizontal: 40, paddingVertical: 14, borderRadius: 24 },
   permissionText: { fontFamily: 'Outfit_600SemiBold', fontSize: 16, color: '#fff' },

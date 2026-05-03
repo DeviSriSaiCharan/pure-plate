@@ -213,7 +213,6 @@ export default function DashboardScreen() {
           ))
         )}
 
-        <View style={{ height: 120 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -230,7 +229,7 @@ function MacroMini({ label, value, color, unit }: { label: string; value: number
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  scroll: { paddingHorizontal: 20, paddingTop: 20 },
+  scroll: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 100 },
 
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
