@@ -43,7 +43,7 @@ const mealSchema = {
         fats: { type: Type.NUMBER }
       }
     },
-    ingredients: { 
+    ingredients: {
       type: Type.ARRAY,
       items: { type: Type.STRING }
     },
@@ -102,9 +102,9 @@ export const analyzeMealWithGemini = onCall(
   {
     cors: true,
     secrets: ["GEMINI_API_KEY"],
-    enforceAppCheck: false 
+    enforceAppCheck: false
   },
-  async (request) => {
+  async (request: any) => {
     logger.info("analyzeMealWithGemini logic triggered");
 
     // Enforce Authentication
@@ -135,7 +135,7 @@ export const analyzeMealWithGemini = onCall(
       const ai = new GoogleGenAI({ 
         apiKey: process.env.GEMINI_API_KEY
       });
-      
+
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: [
@@ -146,10 +146,11 @@ export const analyzeMealWithGemini = onCall(
                     mimeType: mimeType || 'image/jpeg'
                 }
             }
+          }
         ],
         config: {
-            responseMimeType: "application/json",
-            responseSchema: mealSchema
+          responseMimeType: "application/json",
+          responseSchema: mealSchema
         }
       });
       
@@ -171,7 +172,7 @@ export const getClimateAdvice = onCall(
     secrets: ["OPENWEATHER_API_KEY"],
     enforceAppCheck: false
   },
-  async (request) => {
+  async (request: any) => {
     logger.info("getClimateAdvice triggered");
 
     const { lat, lon } = request.data as { lat?: number; lon?: number };
@@ -224,8 +225,8 @@ export const getClimateAdvice = onCall(
            waterGoalDeltaMl
         };
     } catch (e) {
-       logger.error("Weather Error", e);
-       throw new HttpsError("internal", "Could not fetch climate data.");
+      logger.error("Weather Error", e);
+      throw new HttpsError("internal", "Could not fetch climate data.");
     }
   }
 );
