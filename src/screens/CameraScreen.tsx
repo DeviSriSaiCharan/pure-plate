@@ -97,6 +97,7 @@ export default function CameraScreen({ navigation }: any) {
     if (isProcessingRef.current) return;
     isProcessingRef.current = true;
 
+    setIsProcessing(true);
     try {
       const response = await fetch(`https://world.openfoodfacts.org/api/v0/product/${data}.json`);
       const text = await response.text();
@@ -137,6 +138,7 @@ export default function CameraScreen({ navigation }: any) {
       setTimeout(() => {
         isProcessingRef.current = false;
       }, 1500);
+      setIsProcessing(false);
     }
   };
 
@@ -150,6 +152,14 @@ export default function CameraScreen({ navigation }: any) {
       return;
     }
 
+    if (result._per100g) {
+      const parsedSize = parseFloat(currentServingSize);
+      if (isNaN(parsedSize) || parsedSize <= 0) {
+        Alert.alert('Invalid Serving Size', 'Please enter a valid serving size greater than 0g.');
+        return;
+      }
+    }
+
     try {
       setIsProcessing(true);
       const today = new Date().toISOString().split('T')[0];
@@ -160,7 +170,7 @@ export default function CameraScreen({ navigation }: any) {
       let finalFat = Number(result.macros?.fats || result.macros?.fat) || 0;
 
       if (result._per100g) {
-        const factor = (parseFloat(currentServingSize) || 0) / 100;
+        const factor = parseFloat(currentServingSize) / 100;
         finalCals = Math.round(finalCals * factor);
         finalPro = Math.round(finalPro * factor);
         finalCarb = Math.round(finalCarb * factor);
@@ -250,10 +260,10 @@ export default function CameraScreen({ navigation }: any) {
               ].map((item) => {
                 let val = item.top ? (result.calories || 0) : (result.macros?.[item.key] || 0);
                 if (result._per100g) {
-                  const factor = (parseFloat(currentServingSize) || 0) / 100;
+                  const factor = Math.max(0, parseFloat(currentServingSize) || 0) / 100;
                   val = Math.round(Number(val) * factor);
                 }
-                
+
                 return (
                   <View key={item.label} style={styles.macroBox}>
                     <TextInput
