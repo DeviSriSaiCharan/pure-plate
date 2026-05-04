@@ -31,21 +31,8 @@ function needsServingInput(foodName: string): boolean {
 
 function isSoftDrink(foodName: string): boolean {
   const lower = foodName.toLowerCase();
-  return SOFT_DRINK_KEYWORDS.some(k => lower.includes(k));
-}
-
-// Scale nutrition values per 100g to actual grams
-function scaleNutrition(result: any, grams: number): any {
-  const factor = grams / 100;
-  return {
-    ...result,
-    calories: Math.round(Number(result.calories) * factor),
-    macros: {
-      protein: Math.round(Number(result.macros?.protein || 0) * factor),
-      carbs: Math.round(Number(result.macros?.carbs || 0) * factor),
-      fats: Math.round(Number(result.macros?.fats || result.macros?.fat || 0) * factor),
-    }
-  };
+  const words = lower.split(/\s+/);
+  return SOFT_DRINK_KEYWORDS.some(k => words.includes(k));
 }
 
 export default function CameraScreen({ navigation }: any) {
@@ -56,10 +43,9 @@ export default function CameraScreen({ navigation }: any) {
   const [result, setResult] = useState<any>(null);
   const [isBarcodeMode, setIsBarcodeMode] = useState(false);
 
-  // Serving size modal state
-  const [showServingModal, setShowServingModal] = useState(false);
-  const [servingGrams, setServingGrams] = useState('15');
-  const [pendingResult, setPendingResult] = useState<any>(null);
+  const [currentServingSize, setCurrentServingSize] = useState('100');
+
+  const isProcessingRef = useRef(false);
 
   if (!permission) return <View />;
 
@@ -108,13 +94,15 @@ export default function CameraScreen({ navigation }: any) {
   };
 
   const handleBarcodeScanned = async ({ data }: any) => {
-    if (isProcessing) return;
+    if (isProcessingRef.current) return;
+    isProcessingRef.current = true;
+
     setIsProcessing(true);
     try {
       const response = await fetch(`https://world.openfoodfacts.org/api/v0/product/${data}.json`);
-      const json = await response.json();
+      const text = await response.text();
+      const json = JSON.parse(text);
       if (json.status !== 1) throw new Error('Product not found in global database.');
-
       const product = json.product;
       const foodName = product.product_name || 'Unknown Packaged Food';
       const cals100g = product.nutriments?.['energy-kcal_100g'] || 0;
@@ -138,38 +126,20 @@ export default function CameraScreen({ navigation }: any) {
         _per100g: true, // flag so we know values are per 100g
       };
 
-      // For condiments/packaged foods, show serving size picker
-      if (needsServingInput(foodName)) {
-        setPendingResult(baseResult);
-        setShowServingModal(true);
-      } else {
-        // Standard packaged food: warn and show
-        setResult({
-          ...baseResult,
-          warningMessage: baseResult.warningMessage ||
-            '📦 Packaged food values are per 100g. Adjust the fields for your actual portion.',
-        });
-      }
+      setCurrentServingSize('100');
+      setResult({
+        ...baseResult,
+        warningMessage: baseResult.warningMessage ||
+          '📦 Packaged food values are based on 100g. Adjust your serving size below.',
+      });
     } catch (err: any) {
       Alert.alert('Barcode Error', err.message);
     } finally {
+      setTimeout(() => {
+        isProcessingRef.current = false;
+      }, 1500);
       setIsProcessing(false);
     }
-  };
-
-  const confirmServing = () => {
-    const grams = parseFloat(servingGrams);
-    if (isNaN(grams) || grams <= 0) {
-      Alert.alert('Invalid input', 'Please enter a valid number of grams.');
-      return;
-    }
-    const scaled = scaleNutrition(pendingResult, grams);
-    setResult({
-      ...scaled,
-      warningMessage: `✅ Values scaled to ${grams}g portion. Edit below if needed.`,
-    });
-    setShowServingModal(false);
-    setPendingResult(null);
   };
 
   const logMeal = async () => {
@@ -182,17 +152,38 @@ export default function CameraScreen({ navigation }: any) {
       return;
     }
 
+    if (result._per100g) {
+      const parsedSize = parseFloat(currentServingSize);
+      if (isNaN(parsedSize) || parsedSize <= 0) {
+        Alert.alert('Invalid Serving Size', 'Please enter a valid serving size greater than 0g.');
+        return;
+      }
+    }
+
     try {
       setIsProcessing(true);
       const today = new Date().toISOString().split('T')[0];
 
+      let finalCals = Number(result.calories) || 0;
+      let finalPro = Number(result.macros?.protein) || 0;
+      let finalCarb = Number(result.macros?.carbs) || 0;
+      let finalFat = Number(result.macros?.fats || result.macros?.fat) || 0;
+
+      if (result._per100g) {
+        const factor = parseFloat(currentServingSize) / 100;
+        finalCals = Math.round(finalCals * factor);
+        finalPro = Math.round(finalPro * factor);
+        finalCarb = Math.round(finalCarb * factor);
+        finalFat = Math.round(finalFat * factor);
+      }
+
       const mealData: Omit<Meal, 'id' | 'userId' | 'dailyLogId' | 'createdAt'> = {
         name: result.foodName,
         mealType: result.mealType || 'SNACK',
-        calories: Number(result.calories) || 0,
-        protein: Number(result.macros?.protein) || 0,
-        carbs: Number(result.macros?.carbs) || 0,
-        fats: Number(result.macros?.fats || result.macros?.fat) || 0,
+        calories: finalCals,
+        protein: finalPro,
+        carbs: finalCarb,
+        fats: finalFat,
         estimatedByAI: result.estimatedByAI ?? true,
       };
 
@@ -247,38 +238,59 @@ export default function CameraScreen({ navigation }: any) {
               onChangeText={(text) => setResult({ ...result, foodName: text })}
             />
 
-            {/* Macro Row — Editable */}
+            {result._per100g && (
+              <View style={{ marginBottom: 24 }}>
+                <Text style={[styles.fieldLabel, { textAlign: 'center' }]}>Serving Size (g)</Text>
+                <TextInput
+                  style={[styles.foodNameInput, { marginBottom: 0, fontSize: 24, color: colors.primary }]}
+                  keyboardType="numeric"
+                  value={currentServingSize}
+                  onChangeText={setCurrentServingSize}
+                />
+              </View>
+            )}
+
+            {/* Macro Row — Editable/Readonly */}
             <View style={styles.macroRow}>
               {[
                 { label: 'kcal', key: 'calories', top: true },
                 { label: 'Protein', key: 'protein', nested: true },
                 { label: 'Carbs', key: 'carbs', nested: true },
                 { label: 'Fat', key: 'fats', nested: true },
-              ].map((item) => (
-                <View key={item.label} style={styles.macroBox}>
-                  <TextInput
-                    style={styles.macroValue}
-                    keyboardType="numeric"
-                    value={String(item.top ? (result.calories || 0) : (result.macros?.[item.key] || 0))}
-                    onChangeText={(text) => {
-                      if (item.top) {
-                        setResult({ ...result, calories: text });
-                      } else {
-                        setResult({ ...result, macros: { ...result.macros, [item.key]: text } });
-                      }
-                    }}
-                  />
-                  <Text style={styles.macroLabel}>{item.label}</Text>
-                </View>
-              ))}
+              ].map((item) => {
+                let val = item.top ? (result.calories || 0) : (result.macros?.[item.key] || 0);
+                if (result._per100g) {
+                  const factor = Math.max(0, parseFloat(currentServingSize) || 0) / 100;
+                  val = Math.round(Number(val) * factor);
+                }
+
+                return (
+                  <View key={item.label} style={styles.macroBox}>
+                    <TextInput
+                      style={[styles.macroValue, result._per100g && { color: colors.textSecondary }]}
+                      keyboardType="numeric"
+                      editable={!result._per100g}
+                      value={String(val)}
+                      onChangeText={(text) => {
+                        if (item.top) {
+                          setResult({ ...result, calories: text });
+                        } else {
+                          setResult({ ...result, macros: { ...result.macros, [item.key]: text } });
+                        }
+                      }}
+                    />
+                    <Text style={styles.macroLabel}>{item.label}</Text>
+                  </View>
+                );
+              })}
             </View>
 
             {/* Suggestion for condiment-style foods */}
-            {needsServingInput(result.foodName) && (
+            {result._per100g && needsServingInput(result.foodName) && (
               <View style={styles.suggestionBox}>
                 <Scale size={16} color={colors.primary} />
                 <Text style={styles.suggestionText}>
-                  Typical serving for {result.foodName}: 15–30g. Adjust the values above if your portion differs.
+                  Typical serving for {result.foodName}: 15–30g. Adjust the serving size above.
                 </Text>
               </View>
             )}
@@ -292,8 +304,8 @@ export default function CameraScreen({ navigation }: any) {
               {isProcessing
                 ? <ActivityIndicator color="#fff" />
                 : <Text style={styles.logButtonText}>
-                    {result.isRawIngredient ? 'Cannot Log Raw Ingredient' : 'Log Meal →'}
-                  </Text>
+                  {result.isRawIngredient ? 'Cannot Log Raw Ingredient' : 'Log Meal →'}
+                </Text>
               }
             </TouchableOpacity>
 
@@ -303,40 +315,6 @@ export default function CameraScreen({ navigation }: any) {
           </View>
         </ScrollView>
 
-        {/* Serving Size Modal */}
-        <Modal visible={showServingModal} transparent animationType="slide">
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalCard}>
-              <Text style={styles.modalTitle}>How much did you use?</Text>
-              <Text style={styles.modalSubtitle}>
-                Nutritional values for {pendingResult?.foodName} are per 100g.{'\n'}Enter your portion in grams.
-              </Text>
-              <View style={styles.modalInputRow}>
-                <TextInput
-                  style={styles.gramsInput}
-                  keyboardType="numeric"
-                  value={servingGrams}
-                  onChangeText={setServingGrams}
-                  autoFocus
-                />
-                <Text style={styles.gramsLabel}>grams</Text>
-              </View>
-              <View style={styles.modalSuggestions}>
-                {['5', '15', '30', '50'].map((g) => (
-                  <TouchableOpacity key={g} style={styles.servingChip} onPress={() => setServingGrams(g)}>
-                    <Text style={styles.servingChipText}>{g}g</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-              <TouchableOpacity style={styles.logButton} onPress={confirmServing}>
-                <Text style={styles.logButtonText}>Calculate & Continue →</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => { setShowServingModal(false); setResult(pendingResult); }}>
-                <Text style={styles.discardText}>Skip — Use 100g values</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
       </View>
     );
   }
@@ -518,29 +496,4 @@ const styles = StyleSheet.create({
   discardBtn: { alignItems: 'center', paddingVertical: 8 },
   discardText: { fontFamily: 'Outfit_400Regular', fontSize: 14, color: colors.textSecondary },
 
-  // Serving size modal
-  modalOverlay: {
-    flex: 1, backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalCard: {
-    backgroundColor: '#fff', borderTopLeftRadius: 32, borderTopRightRadius: 32,
-    padding: 28, paddingBottom: 48,
-  },
-  modalTitle: { fontFamily: 'Outfit_700Bold', fontSize: 22, color: colors.textPrimary, marginBottom: 8, textAlign: 'center' },
-  modalSubtitle: { fontFamily: 'Outfit_400Regular', fontSize: 14, color: colors.textSecondary, textAlign: 'center', marginBottom: 24, lineHeight: 20 },
-  modalInputRow: { flexDirection: 'row', alignItems: 'center', gap: 12, justifyContent: 'center', marginBottom: 16 },
-  gramsInput: {
-    borderWidth: 2, borderColor: colors.primary, borderRadius: 16,
-    paddingHorizontal: 20, paddingVertical: 12,
-    fontFamily: 'Outfit_700Bold', fontSize: 28, color: colors.textPrimary,
-    minWidth: 100, textAlign: 'center',
-  },
-  gramsLabel: { fontFamily: 'Outfit_600SemiBold', fontSize: 18, color: colors.textSecondary },
-  modalSuggestions: { flexDirection: 'row', justifyContent: 'center', gap: 8, marginBottom: 24 },
-  servingChip: {
-    borderWidth: 1.5, borderColor: colors.primary, borderRadius: 20,
-    paddingHorizontal: 16, paddingVertical: 8,
-  },
-  servingChipText: { fontFamily: 'Outfit_600SemiBold', fontSize: 14, color: colors.primary },
 });
